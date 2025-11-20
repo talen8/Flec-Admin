@@ -1,0 +1,122 @@
+name: Docker 构建发布
+
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  IMAGE_NAME: flec-admin
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: 登录 Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 生成标签
+        id: tags
+        run: |
+          IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+            # 检查是否为预发布版本 (包含 alpha, beta, rc 等)
+            if [[ "$VERSION" =~ (alpha|beta|rc|pre) ]]; then
+              echo "tags=${IMAGE}:${VERSION}" >> $GITHUB_OUTPUT
+              echo "is_prerelease=true" >> $GITHUB_OUTPUT
+              echo "检测到预发布版本: v${VERSION} (不打 latest 标签)"
+            else
+              echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest" >> $GITHUB_OUTPUT
+              echo "is_prerelease=false" >> $GITHUB_OUTPUT
+              echo "正式版本: v${VERSION} (打 latest 标签)"
+            fi
+          else
+            echo "tags=${IMAGE}:latest" >> $GITHUB_OUTPUT
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 构建静态文件
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          npm ci
+          npm run build
+          
+          # 打包构建产物
+          cd dist
+          tar -czf ../flec-admin_${VERSION}_dist.tar.gz .
+          cd ..
+          
+          # 生成校验和
+          sha256sum flec-admin_${VERSION}_dist.tar.gz > checksums.txt
+
+      - name: 构建并推送 Docker 镜像
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+
+      - name: 生成 Changelog
+        id: changelog
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -n "$PREV_TAG" ]; then
+            COMMITS=$(git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges -10)
+          fi
+
+          # 检查是否为预发布版本
+          if [[ "$VERSION" =~ (alpha|beta|rc|pre) ]]; then
+            RELEASE_TYPE="预发布版本 (Pre-release)"
+          else
+            RELEASE_TYPE="正式版本 (Stable Release)"
+          fi
+
+          # 生成 changelog
+          cat > release_notes.md << EOF
+          ## 🎉 版本 ${VERSION} 发布
+          
+          ${RELEASE_TYPE}
+
+          ### 📋 构建信息
+          - **版本**: v${VERSION}
+          - **Commit**: ${GITHUB_SHA:0:7}
+          - **构建时间**: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          - **Node 版本**: $(node --version)
+
+          ### 📝 更新内容
+          ${COMMITS}
+          EOF
+
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ steps.tags.outputs.is_prerelease == 'true' }}
+          generate_release_notes: true
+          files: |
+            flec-admin_*.tar.gz
+            checksums.txt
