@@ -1,17 +1,13 @@
-name: Docker 构建发布
+name: GitHub Release 发布
 
 on:
   push:
     tags: ["v*"]
 
-env:
-  IMAGE_NAME: flec-admin
-
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      packages: write
       contents: write
 
     steps:
@@ -25,31 +21,17 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: 登录 Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: 生成标签
-        id: tags
+      - name: 检测版本信息
+        id: version
         run: |
-          IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-            # 检查是否为预发布版本 (包含 alpha, beta, rc 等)
-            if [[ "$VERSION" =~ (alpha|beta|rc|pre) ]]; then
-              echo "tags=${IMAGE}:${VERSION}" >> $GITHUB_OUTPUT
-              echo "is_prerelease=true" >> $GITHUB_OUTPUT
-              echo "检测到预发布版本: v${VERSION} (不打 latest 标签)"
-            else
-              echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest" >> $GITHUB_OUTPUT
-              echo "is_prerelease=false" >> $GITHUB_OUTPUT
-              echo "正式版本: v${VERSION} (打 latest 标签)"
-            fi
+          VERSION=${GITHUB_REF#refs/tags/v}
+          # 检查是否为预发布版本 (包含 alpha, beta, rc 等)
+          if [[ "$VERSION" =~ (alpha|beta|rc|pre) ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "检测到预发布版本: v${VERSION}"
           else
-            echo "tags=${IMAGE}:latest" >> $GITHUB_OUTPUT
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "正式版本: v${VERSION}"
           fi
 
       - name: 构建静态文件
@@ -65,13 +47,6 @@ jobs:
           
           # 生成校验和
           sha256sum flec-admin_${VERSION}_dist.tar.gz > checksums.txt
-
-      - name: 构建并推送 Docker 镜像
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.tags.outputs.tags }}
 
       - name: 生成 Changelog
         id: changelog
@@ -115,7 +90,7 @@ jobs:
         with:
           body_path: release_notes.md
           draft: false
-          prerelease: ${{ steps.tags.outputs.is_prerelease == 'true' }}
+          prerelease: ${{ steps.version.outputs.is_prerelease == 'true' }}
           generate_release_notes: true
           files: |
             flec-admin_*.tar.gz
