@@ -168,7 +168,7 @@
           <template #header>
             <div class="chart-header">
               <span>文章贡献</span>
-              <el-select v-model="selectedYear" size="small" style="width: 100px" @change="renderCalendarChart">
+              <el-select v-model="selectedYear" size="small" style="width: 100px" @change="fetchContributionData">
                 <el-option v-for="year in availableYears" :key="year" :label="year" :value="year" />
               </el-select>
             </div>
@@ -261,11 +261,19 @@ let calendarChart: echarts.ECharts | null = null
 
 const CHART_COLORS = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc']
 
-const availableYears = computed(() => 
-  contributionData.value.length === 0
-    ? [new Date().getFullYear()]
-    : [...new Set(contributionData.value.map(item => new Date(item.date).getFullYear()))].sort((a, b) => b - a)
-)
+// 生成可选年份列表（从2024年到当前年份）
+const availableYears = computed(() => {
+  const currentYear = new Date().getFullYear()
+  const startYear = 2024
+  const years: number[] = []
+  
+  // 从当前年份倒序到2024年
+  for (let year = currentYear; year >= startYear; year--) {
+    years.push(year)
+  }
+  
+  return years
+})
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -545,26 +553,31 @@ const renderTagCloud = () => {
 
 const fetchContributionData = async () => {
   try {
-    contributionData.value = await getArticleContribution()
-    if (contributionData.value.length > 0) {
-      const years = contributionData.value.map(item => new Date(item.date).getFullYear())
-      selectedYear.value = Math.max(...years)
-    }
+    // 调用API时传入year参数，获取指定年份的数据
+    const data = await getArticleContribution({ year: selectedYear.value })
+    contributionData.value = data || []
+    // 等待响应式数据更新完成后再渲染图表
+    await nextTick()
     renderCalendarChart()
   } catch (error) {
     console.error('获取文章贡献数据失败', error)
+    contributionData.value = []
+    if (calendarChart) {
+      calendarChart.clear()
+    }
   }
 }
 
 const renderCalendarChart = () => {
   if (!calendarChart) return
 
-  const yearData = contributionData.value.filter(item => {
-    const itemYear = new Date(item.date).getFullYear()
-    return itemYear === selectedYear.value
-  })
+  // 确保数据为数组，即使为空也显示日历网格
+  const chartData = contributionData.value || []
   
-  const maxCount = Math.max(...yearData.map(item => item.count), 1)
+  // 计算最大值，如果没有数据则设为1（避免visualMap显示异常）
+  const maxCount = chartData.length > 0 
+    ? Math.max(...chartData.map(item => item.count), 1)
+    : 1
 
   const option = {
     tooltip: {
@@ -600,11 +613,12 @@ const renderCalendarChart = () => {
     series: {
       type: 'heatmap',
       coordinateSystem: 'calendar',
-      data: yearData.map(item => [item.date, item.count])
+      data: chartData.map(item => [item.date, item.count])
     }
   }
 
-  calendarChart.setOption(option, true)
+  // 使用 notMerge: true 确保完全替换配置
+  calendarChart.setOption(option, { notMerge: true })
 }
 
 onMounted(async () => {

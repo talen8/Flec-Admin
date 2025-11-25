@@ -1,5 +1,5 @@
 import request from "@/utils/request";
-import type { DashboardStats, TrendDataItem, TrendQuery, CategoryStats, TagStats, ArticleContribution, VisitListData } from "@/types/stats";
+import type { DashboardStats, TrendDataItem, TrendQuery, CategoryStats, TagStats, ArticleContribution, VisitListData, ContributionQuery } from "@/types/stats";
 import type { PaginationQuery } from "@/types/request";
 
 /**
@@ -37,10 +37,11 @@ export function getTagStats(): Promise<TagStats[]> {
 
 /**
  * 获取文章贡献数据
+ * @param params 查询参数
  * @returns Promise<ArticleContribution[]>
  */
-export function getArticleContribution(): Promise<ArticleContribution[]> {
-  return request.get("/admin/stats/contribution");
+export function getArticleContribution(params?: ContributionQuery): Promise<ArticleContribution[]> {
+  return request.get("/admin/stats/contribution", { params });
 }
 
 /**

@@ -43,6 +43,12 @@ export interface ArticleContribution {
   count: number
 }
 
+// 文章贡献查询参数
+export interface ContributionQuery {
+  year?: number  // 年份（可选）
+  month?: number // 月份 1-12（可选）
+}
+
 // 分类统计数据
 export interface CategoryStats {
   name: string
