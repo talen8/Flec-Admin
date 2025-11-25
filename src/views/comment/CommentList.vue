@@ -11,10 +11,6 @@
     @update:page="fetchComments"
     @update:pageSize="fetchComments"
   >
-    <!-- 右上角工具栏 -->
-    <template #toolbar-after>
-      <el-button type="primary" @click="emailDialogVisible = true">邮箱配置</el-button>
-    </template>
 
     <!-- 表格列 -->
     <el-table-column label="用户信息" width="180" align="center">
@@ -85,10 +81,6 @@
         </el-button>
       </template>
     </el-table-column>
-    <!-- 额外挂载区域 -->
-    <template #extra>
-      <email-config-dialog v-model="emailDialogVisible" />
-    </template>
   </common-list>
 </template>
 
@@ -101,13 +93,11 @@ import type { Comment } from '@/types/comment'
 import type { PaginationQuery } from '@/types/request'
 import { getComments, deleteComment, restoreComment, toggleCommentStatus } from '@/api/comment'
 import { formatDateTime } from '@/utils/date'
-import EmailConfigDialog from '@/views/comment/components/EmailConfigDialog.vue'
 
 const loading = ref(false)
 const commentList = ref<Comment[]>([])
 const total = ref(0)
 const queryParams = ref<PaginationQuery>({ page: 1, page_size: 20 })
-const emailDialogVisible = ref(false)
 
 const fetchComments = async () => {
   loading.value = true

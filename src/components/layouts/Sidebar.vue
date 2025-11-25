@@ -55,6 +55,11 @@
         <i class="ri-feedback-line ri-lg"></i>
         <template #title>反馈投诉</template>
       </el-menu-item>
+
+      <el-menu-item index="/settings">
+        <i class="ri-settings-3-line ri-lg"></i>
+        <template #title>系统设置</template>
+      </el-menu-item>
     </el-menu>
   </div>
 </template>
