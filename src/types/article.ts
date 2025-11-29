@@ -55,3 +55,20 @@ export interface ArticleListData {
     page: number
     page_size: number
 }
+
+// 文章导入相关类型
+export interface ImportArticleError {
+    filename: string
+    title: string
+    error: string
+}
+
+export interface ImportArticlesResult {
+    total: number
+    success: number
+    failed: number
+    categories_added: number
+    tags_added: number
+    errors?: ImportArticleError[]
+}
+

@@ -1,13 +1,13 @@
 import request from "@/utils/request";
-import type { Article, ArticleListData, CreateArticleRequest, UpdateArticleRequest } from "@/types/article";
+import type { Article, CreateArticleRequest, UpdateArticleRequest, ImportArticlesResult } from "@/types/article";
 import type { PaginationQuery } from "@/types/request";
 
 /**
  * 获取文章列表
  * @param params 查询参数
- * @returns Promise<ArticleListData>
+ * @returns Promise<ArticleListResponse>
  */
-export function getArticles(params: PaginationQuery): Promise<ArticleListData> {
+export function getArticles(params: PaginationQuery): Promise<any> {
   return request.get("/admin/articles", { params });
 }
 
@@ -46,4 +46,17 @@ export function updateArticle(id: number, data: UpdateArticleRequest): Promise<A
  */
 export function deleteArticle(id: number): Promise<void> {
   return request.delete(`/admin/articles/${id}`);
+}
+
+/**
+ * 导入文章
+ * @param formData 包含文件和参数的 FormData
+ * @returns Promise<ImportArticlesResult>
+ */
+export function importArticles(formData: FormData): Promise<ImportArticlesResult> {
+  return request.post("/admin/articles/import", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }
+  });
 }

@@ -253,12 +253,11 @@ watch(
     category_id: formData.category_id,
     tag_ids: formData.tag_ids,
     location: formData.location,
-    is_top: formData.is_top,
-    is_publish: formData.is_publish
+    is_top: formData.is_top
   }),
   () => {
-    // 只有草稿或新建文章才自动保存
-    if (!isSaved.value && !loading.value && canAutoSave.value) {
+    // 只有草稿或新建文章才自动保存，且文章未标记为发布
+    if (!isSaved.value && !loading.value && canAutoSave.value && !formData.is_publish) {
       debouncedSaveDraft()
     }
   },

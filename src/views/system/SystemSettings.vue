@@ -53,6 +53,33 @@
               </el-form-item>
             </el-form>
           </el-tab-pane>
+
+          <!-- 导入导出标签页 -->
+          <el-tab-pane label="导入导出" name="import-export">
+            <el-form label-width="100px" class="setting-form">
+              <el-form-item label="文章数据">
+                <el-button type="primary" @click="handleArticleImport">导入文章</el-button>
+              </el-form-item>
+
+              <el-form-item label="评论数据">
+                <el-button disabled>导入评论</el-button>
+                <el-button disabled style="margin-left: 10px;">导出评论</el-button>
+              </el-form-item>
+
+              <el-form-item label="友链数据">
+                <el-button disabled>导入友链</el-button>
+                <el-button disabled style="margin-left: 10px;">导出友链</el-button>
+              </el-form-item>
+
+              <el-form-item label="全站备份">
+                <el-button disabled>备份数据</el-button>
+                <el-button disabled style="margin-left: 10px;">恢复数据</el-button>
+              </el-form-item>
+            </el-form>
+
+            <!-- 文章导入对话框 -->
+            <import-article-dialog v-model="articleImportVisible" @success="handleImportSuccess" />
+          </el-tab-pane>
         </el-tabs>
     </el-card>
   </div>
@@ -63,11 +90,13 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getSettingGroup, updateSettingGroup } from '@/api/sysconfig'
 import type { UpdateSettingGroupRequest } from '@/types/sysconfig'
+import ImportArticleDialog from './components/ImportArticleDialog.vue'
 
 // 页面状态
 const activeTab = ref('site')
 const loading = ref(false)
 const saving = ref(false)
+const articleImportVisible = ref(false)
 
 // 站点配置表单
 const siteForm = ref({
@@ -167,6 +196,15 @@ const handleSave = async () => {
   } finally {
     saving.value = false
   }
+}
+
+// 导入导出功能
+const handleArticleImport = () => {
+  articleImportVisible.value = true
+}
+
+const handleImportSuccess = () => {
+  articleImportVisible.value = false
 }
 
 onMounted(() => {
