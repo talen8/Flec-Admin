@@ -81,6 +81,22 @@
       </template>
     </el-table-column>
 
+    <el-table-column label="发布时间" width="180" align="center">
+      <template #default="{ row }">
+        <div v-if="row.publish_time" style="font-size: 13px; line-height: 1.8;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <el-icon size="13" style="color: #67c23a;"><Upload /></el-icon>
+            <span>{{ formatDateTime(row.publish_time) }}</span>
+          </div>
+          <div v-if="row.update_time && row.update_time !== row.publish_time" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <el-icon size="13" style="color: #409eff;"><EditPen /></el-icon>
+            <span>{{ formatDateTime(row.update_time) }}</span>
+          </div>
+        </div>
+        <span v-else style="color: #999">未发布</span>
+      </template>
+    </el-table-column>
+
     <el-table-column label="操作" width="150" align="center">
       <template #default="{ row }">
         <el-button type="primary" link size="small" @click="handleEdit(row.id)">编辑</el-button>
@@ -94,7 +110,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Folder, Collection, View, ChatDotRound } from '@element-plus/icons-vue'
+import { Folder, Collection, View, ChatDotRound, Upload, EditPen } from '@element-plus/icons-vue'
 import CommonList from '@/components/common/CommonList.vue'
 import type { Article } from '@/types/article'
 import type { PaginationQuery } from '@/types/request'
