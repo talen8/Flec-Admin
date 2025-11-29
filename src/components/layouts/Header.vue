@@ -45,6 +45,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { User, Lock, SwitchButton, ArrowDown } from '@element-plus/icons-vue'
 import NotificationBell from '@/components/common/NotificationBell.vue'
+import { logout as logoutApi } from '@/api/user'
+import { removeTokens } from '@/utils/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -75,8 +77,19 @@ const handleLogout = async () => {
       confirmButtonText: '确定',
       cancelButtonText: '取消'
     })
-    localStorage.removeItem('token')
+    
+    // 调用后端登出 API，将 token 加入黑名单
+    try {
+      await logoutApi()
+    } catch (error) {
+      console.error('登出 API 调用失败:', error)
+      // 即使后端 API 失败，也要清除本地 token
+    }
+    
+    // 清除所有本地存储的认证信息
+    removeTokens()
     localStorage.removeItem('userInfo')
+    
     ElMessage.success('已退出登录')
     router.push('/login')
   } catch {}

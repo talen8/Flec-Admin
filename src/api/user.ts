@@ -21,6 +21,14 @@ export function refreshToken(data: RefreshTokenRequest): Promise<RefreshTokenRes
 }
 
 /**
+ * 用户登出
+ * @returns Promise<void>
+ */
+export function logout(): Promise<void> {
+  return request.post("/auth/logout");
+}
+
+/**
  * 获取用户列表
  * @param params 查询参数
  * @returns Promise<UserListData>
