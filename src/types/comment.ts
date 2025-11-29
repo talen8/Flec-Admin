@@ -27,3 +27,18 @@ export interface CommentListData {
     page_size: number
 }
 
+// 评论导入相关类型
+export interface ImportCommentError {
+    index: number
+    content: string
+    error: string
+}
+
+export interface ImportCommentsResult {
+    total: number
+    success: number
+    failed: number
+    user_created: number
+    errors?: ImportCommentError[]
+}
+

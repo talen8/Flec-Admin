@@ -1,5 +1,5 @@
 import request from "@/utils/request";
-import type { Comment, CommentListData } from "@/types/comment";
+import type { Comment, CommentListData, ImportCommentsResult } from "@/types/comment";
 import type { PaginationQuery } from "@/types/request";
 
 /**
@@ -36,4 +36,17 @@ export function deleteComment(id: number): Promise<void> {
  */
 export function restoreComment(id: number): Promise<void> {
   return request.put(`/admin/comments/${id}/restore`);
+}
+
+/**
+ * 导入评论
+ * @param formData 包含文件和参数的 FormData
+ * @returns Promise<ImportCommentsResult>
+ */
+export function importComments(formData: FormData): Promise<ImportCommentsResult> {
+  return request.post("/admin/comments/import", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }
+  });
 }

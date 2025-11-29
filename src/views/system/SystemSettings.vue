@@ -62,7 +62,7 @@
               </el-form-item>
 
               <el-form-item label="评论数据">
-                <el-button disabled>导入评论</el-button>
+                <el-button type="primary" @click="handleCommentImport">导入评论</el-button>
                 <el-button disabled style="margin-left: 10px;">导出评论</el-button>
               </el-form-item>
 
@@ -79,6 +79,9 @@
 
             <!-- 文章导入对话框 -->
             <import-article-dialog v-model="articleImportVisible" @success="handleImportSuccess" />
+            
+            <!-- 评论导入对话框 -->
+            <import-comment-dialog v-model="commentImportVisible" @success="handleImportSuccess" />
           </el-tab-pane>
         </el-tabs>
     </el-card>
@@ -91,12 +94,14 @@ import { ElMessage } from 'element-plus'
 import { getSettingGroup, updateSettingGroup } from '@/api/sysconfig'
 import type { UpdateSettingGroupRequest } from '@/types/sysconfig'
 import ImportArticleDialog from './components/ImportArticleDialog.vue'
+import ImportCommentDialog from './components/ImportCommentDialog.vue'
 
 // 页面状态
 const activeTab = ref('site')
 const loading = ref(false)
 const saving = ref(false)
 const articleImportVisible = ref(false)
+const commentImportVisible = ref(false)
 
 // 站点配置表单
 const siteForm = ref({
@@ -203,8 +208,13 @@ const handleArticleImport = () => {
   articleImportVisible.value = true
 }
 
+const handleCommentImport = () => {
+  commentImportVisible.value = true
+}
+
 const handleImportSuccess = () => {
   articleImportVisible.value = false
+  commentImportVisible.value = false
 }
 
 onMounted(() => {
