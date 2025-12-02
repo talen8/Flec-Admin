@@ -1,5 +1,5 @@
 // 配置分组类型
-export type SettingGroupType = 'site' | 'email' | 'upload'
+export type SettingGroupType = 'site' | 'email' | 'upload' | 'ai'
 
 // 配置分组信息
 export interface SettingGroup {

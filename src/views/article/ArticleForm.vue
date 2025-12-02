@@ -56,6 +56,11 @@
             maxlength="150" show-word-limit clearable />
         </el-form-item>
 
+        <el-form-item v-if="isEdit && formData.is_publish && formData.ai_summary" label="AI 总结" prop="ai_summary">
+          <el-input v-model="formData.ai_summary" type="textarea" placeholder="AI 总结" :rows="3" maxlength="500"
+            show-word-limit clearable />
+        </el-form-item>
+
         <el-form-item label="文章封面" prop="cover">
           <ImageUploader ref="coverUploaderRef" v-model="formData.cover" upload-type="文章封面" :max-size="10" width="285px"
             height="160px" />
@@ -82,19 +87,13 @@
 
           <div class="form-row">
             <el-form-item label="发布时间" class="form-col">
-              <el-date-picker v-model="formData.publish_time" type="datetime" placeholder="选择发布时间（留空则使用当前时间）"
-                style="width: 100%" format="YYYY-MM-DD HH:mm:ss" clearable />
-              <div class="form-tip">
-                发布时留空将使用当前时间，草稿状态下此时间不生效
-              </div>
+              <el-date-picker v-model="formData.publish_time" type="datetime" placeholder="选择发布时间" style="width: 100%"
+                format="YYYY-MM-DD HH:mm:ss" clearable />
             </el-form-item>
 
             <el-form-item label="更新时间" class="form-col">
-              <el-date-picker v-model="formData.update_time" type="datetime" placeholder="留空则自动使用当前时间"
-                style="width: 100%" format="YYYY-MM-DD HH:mm:ss" clearable />
-              <div class="form-tip">
-                留空则自动使用当前时间作为更新时间
-              </div>
+              <el-date-picker v-model="formData.update_time" type="datetime" placeholder="选择更新时间" style="width: 100%"
+                format="YYYY-MM-DD HH:mm:ss" clearable />
             </el-form-item>
           </div>
         </div>
@@ -159,6 +158,7 @@ const formData = reactive({
   title: '',
   content: '',
   summary: '',
+  ai_summary: '',
   cover: '',
   category_id: undefined as number | undefined,
   tag_ids: [] as number[],
@@ -174,6 +174,7 @@ const originalData = reactive({
   title: '',
   content: '',
   summary: '',
+  ai_summary: '',
   cover: '',
   category_id: undefined as number | undefined,
   tag_ids: [] as number[],
@@ -192,14 +193,15 @@ const formRules: FormRules = {
   ]
 }
 
-// ==================== 超级简化草稿功能 ====================
-// 策略：复用文章API，将草稿保存为 is_publish=false 的文章
-// 优点：不需要独立草稿API，减少90%请求，代码极简
-
 // 自动保存草稿（30秒一次 + 离开页面时）
 const saveDraftSilently = async () => {
   // 只有标题或内容不为空时才保存
   if (!formData.title.trim() && !formData.content.trim()) {
+    return
+  }
+
+  // 重要：再次检查是否允许自动保存
+  if (isSaved.value || loading.value || !canAutoSave.value || formData.is_publish) {
     return
   }
 
@@ -233,10 +235,8 @@ const saveDraftSilently = async () => {
       const result = await createArticle(saveData)
       draftArticleId.value = result.id
     }
-
-    console.log('💾 内容已自动保存', new Date().toLocaleTimeString())
   } catch (error) {
-    console.warn('⚠️ 自动保存失败:', error)
+    // 自动保存失败，静默处理
   }
 }
 
@@ -249,6 +249,7 @@ watch(
     title: formData.title,
     content: formData.content,
     summary: formData.summary,
+    ai_summary: formData.ai_summary,
     cover: formData.cover,
     category_id: formData.category_id,
     tag_ids: formData.tag_ids,
@@ -293,6 +294,7 @@ const fetchArticle = async (id: number) => {
       title: article.title,
       content: article.content,
       summary: article.summary,
+      ai_summary: article.ai_summary || '',
       cover: article.cover || '',
       category_id: article.category?.id || undefined,
       tag_ids: article.tags?.map(tag => tag.id) || [],
@@ -350,6 +352,7 @@ const handleSave = async (autoRedirect: boolean = true) => {
       title: formData.title.trim(),
       content: formData.content.trim(),
       summary: formData.summary.trim(),
+      ai_summary: formData.ai_summary.trim(),
       cover: formData.cover || '',
       tag_ids: Array.from(formData.tag_ids || []),
       location: formData.location.trim(),
@@ -386,11 +389,11 @@ const handleSave = async (autoRedirect: boolean = true) => {
 
     if (isEdit.value) {
       await updateArticle(id, submitData)
+      ElMessage.success('更新文章成功')
     } else {
       await createArticle(submitData)
+      ElMessage.success(submitData.is_publish ? '文章已发布' : '创建文章成功')
     }
-
-    ElMessage.success(isEdit.value ? '更新文章成功' : '创建文章成功')
 
     // 标记已保存，避免离开页面时提示
     isSaved.value = true
@@ -435,6 +438,7 @@ const hasFormChanged = (): boolean => {
     formData.title !== originalData.title ||
     formData.content !== originalData.content ||
     formData.summary !== originalData.summary ||
+    formData.ai_summary !== originalData.ai_summary ||
     formData.cover !== originalData.cover ||
     formData.category_id !== originalData.category_id ||
     !arraysEqual(formData.tag_ids, originalData.tag_ids) ||
@@ -588,7 +592,6 @@ onBeforeRouteLeave(async (to, from, next) => {
   if (hasFormChanged()) {
     // 只有草稿或新建文章才自动保存
     if (canAutoSave.value) {
-      console.log('🚀 检测到未保存内容，自动保存草稿...')
       await saveDraftSilently()
       ElMessage.info('内容已自动保存为草稿')
     } else {
@@ -782,13 +785,6 @@ onBeforeRouteLeave(async (to, from, next) => {
         }
       }
     }
-  }
-
-  .form-tip {
-    font-size: 12px;
-    color: #909399;
-    margin-top: 8px;
-    line-height: 1.5;
   }
 
   :deep(.el-divider) {

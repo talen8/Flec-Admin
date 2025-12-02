@@ -4,6 +4,7 @@ export interface Article {
     title: string
     content: string
     summary?: string
+    ai_summary?: string
     cover?: string
     is_publish: boolean  // 是否已发布
     is_top: boolean

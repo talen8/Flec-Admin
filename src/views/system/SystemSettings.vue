@@ -14,76 +14,98 @@
 
       <!-- 标签页内容 -->
       <el-tabs v-model="activeTab" class="setting-tabs">
-          <!-- 站点信息标签页 -->
-          <el-tab-pane label="站点信息" name="site">
-            <el-form :model="siteForm" label-width="120px" class="setting-form">
-              <el-form-item label="站点名称" required>
-                <el-input v-model="siteForm.name" placeholder="用于RSS订阅和邮件显示的站点名" :disabled="loading" />
-              </el-form-item>
+        <!-- 站点信息标签页 -->
+        <el-tab-pane label="站点信息" name="site">
+          <el-form :model="siteForm" label-width="120px" class="setting-form">
+            <el-form-item label="站点名称" required>
+              <el-input v-model="siteForm.name" placeholder="用于RSS订阅和邮件显示的站点名" :disabled="loading" />
+            </el-form-item>
 
-              <el-form-item label="前台地址" required>
-                <el-input v-model="siteForm.web_url" placeholder="例如 https://your-site.com" :disabled="loading" />
-              </el-form-item>
+            <el-form-item label="前台地址" required>
+              <el-input v-model="siteForm.web_url" placeholder="例如 https://your-site.com" :disabled="loading" />
+            </el-form-item>
 
-              <el-form-item label="后台地址" required>
-                <el-input v-model="siteForm.admin_url" placeholder="例如 https://admin.your-site.com"
-                  :disabled="loading" />
-              </el-form-item>
-            </el-form>
-          </el-tab-pane>
+            <el-form-item label="后台地址" required>
+              <el-input v-model="siteForm.admin_url" placeholder="例如 https://admin.your-site.com" :disabled="loading" />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
 
-          <!-- 通知配置标签页 -->
-          <el-tab-pane label="通知配置" name="notification">
-            <el-form :model="emailForm" label-width="120px" class="setting-form">
-              <el-form-item label="SMTP 服务器">
-                <el-input v-model="emailForm.smtp_host" placeholder="例如 smtp.163.com" :disabled="loading" />
-              </el-form-item>
+        <!-- 通知配置标签页 -->
+        <el-tab-pane label="通知配置" name="notification">
+          <el-form :model="emailForm" label-width="120px" class="setting-form">
+            <el-form-item label="SMTP 服务器">
+              <el-input v-model="emailForm.smtp_host" placeholder="例如 smtp.163.com" :disabled="loading" />
+            </el-form-item>
 
-              <el-form-item label="SMTP 端口">
-                <el-input v-model="emailForm.smtp_port" type="number" placeholder="例如 465" :disabled="loading" />
-              </el-form-item>
+            <el-form-item label="SMTP 端口">
+              <el-input v-model="emailForm.smtp_port" type="number" placeholder="例如 465" :disabled="loading" />
+            </el-form-item>
 
-              <el-form-item label="SMTP 用户名">
-                <el-input v-model="emailForm.smtp_username" placeholder="邮箱账号，例如 user@domain.com" :disabled="loading" />
-              </el-form-item>
+            <el-form-item label="SMTP 用户名">
+              <el-input v-model="emailForm.smtp_username" placeholder="邮箱账号，例如 user@domain.com" :disabled="loading" />
+            </el-form-item>
 
-              <el-form-item label="SMTP 密码">
-                <el-input v-model="emailForm.smtp_password" type="password" show-password placeholder="邮箱授权码或密码"
-                  :disabled="loading" />
-              </el-form-item>
-            </el-form>
-          </el-tab-pane>
+            <el-form-item label="SMTP 密码">
+              <el-input v-model="emailForm.smtp_password" type="password" show-password placeholder="邮箱授权码或密码"
+                :disabled="loading" />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
 
-          <!-- 导入导出标签页 -->
-          <el-tab-pane label="导入导出" name="import-export">
-            <el-form label-width="100px" class="setting-form">
-              <el-form-item label="文章数据">
-                <el-button type="primary" @click="handleArticleImport">导入文章</el-button>
-              </el-form-item>
+        <!-- AI 配置标签页 -->
+        <el-tab-pane label="AI 配置" name="ai">
+          <el-form :model="aiForm" label-width="120px" class="setting-form">
+            <el-form-item label="API 端点">
+              <el-input v-model="aiForm.base_url" placeholder="例如 https://api.deepseek.com" :disabled="loading" />
+            </el-form-item>
 
-              <el-form-item label="评论数据">
-                <el-button type="primary" @click="handleCommentImport">导入评论</el-button>
-                <el-button disabled style="margin-left: 10px;">导出评论</el-button>
-              </el-form-item>
+            <el-form-item label="API 密钥">
+              <el-input v-model="aiForm.api_key" type="password" show-password placeholder="输入 API Key"
+                :disabled="loading" />
+            </el-form-item>
 
-              <el-form-item label="友链数据">
-                <el-button disabled>导入友链</el-button>
-                <el-button disabled style="margin-left: 10px;">导出友链</el-button>
-              </el-form-item>
+            <el-form-item label="模型名称">
+              <el-input v-model="aiForm.model" placeholder="例如 deepseek-chat" :disabled="loading" />
+            </el-form-item>
 
-              <el-form-item label="全站备份">
-                <el-button disabled>备份数据</el-button>
-                <el-button disabled style="margin-left: 10px;">恢复数据</el-button>
-              </el-form-item>
-            </el-form>
+            <el-form-item label="提示词模板">
+              <el-input v-model="aiForm.prompt" type="textarea" :rows="8" placeholder="输入生成文章摘要的提示词"
+                :disabled="loading" />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
 
-            <!-- 文章导入对话框 -->
-            <import-article-dialog v-model="articleImportVisible" @success="handleImportSuccess" />
-            
-            <!-- 评论导入对话框 -->
-            <import-comment-dialog v-model="commentImportVisible" @success="handleImportSuccess" />
-          </el-tab-pane>
-        </el-tabs>
+        <!-- 导入导出标签页 -->
+        <el-tab-pane label="导入导出" name="import-export">
+          <el-form label-width="100px" class="setting-form">
+            <el-form-item label="文章数据">
+              <el-button type="primary" @click="handleArticleImport">导入文章</el-button>
+            </el-form-item>
+
+            <el-form-item label="评论数据">
+              <el-button type="primary" @click="handleCommentImport">导入评论</el-button>
+              <el-button disabled style="margin-left: 10px;">导出评论</el-button>
+            </el-form-item>
+
+            <el-form-item label="友链数据">
+              <el-button disabled>导入友链</el-button>
+              <el-button disabled style="margin-left: 10px;">导出友链</el-button>
+            </el-form-item>
+
+            <el-form-item label="全站备份">
+              <el-button disabled>备份数据</el-button>
+              <el-button disabled style="margin-left: 10px;">恢复数据</el-button>
+            </el-form-item>
+          </el-form>
+
+          <!-- 文章导入对话框 -->
+          <import-article-dialog v-model="articleImportVisible" @success="handleImportSuccess" />
+
+          <!-- 评论导入对话框 -->
+          <import-comment-dialog v-model="commentImportVisible" @success="handleImportSuccess" />
+        </el-tab-pane>
+      </el-tabs>
     </el-card>
   </div>
 </template>
@@ -116,6 +138,14 @@ const emailForm = ref({
   smtp_port: '465',
   smtp_username: '',
   smtp_password: ''
+})
+
+// AI 配置表单
+const aiForm = ref({
+  base_url: '',
+  api_key: '',
+  model: '',
+  prompt: ''
 })
 
 // 加载站点配置
@@ -155,11 +185,30 @@ const loadEmailConfigs = async () => {
   }
 }
 
+// 加载 AI 配置
+const loadAIConfigs = async () => {
+  try {
+    const data = await getSettingGroup('ai')
+    const configs: Record<string, string> = {}
+    data.settings.forEach(item => {
+      const key = item.key.replace('ai.', '')
+      configs[key] = item.value
+    })
+
+    aiForm.value.base_url = configs.base_url || ''
+    aiForm.value.api_key = configs.api_key || ''
+    aiForm.value.model = configs.model || ''
+    aiForm.value.prompt = configs.prompt || ''
+  } catch {
+    ElMessage.error('获取 AI 配置失败')
+  }
+}
+
 // 加载所有配置
 const loadAllConfigs = async () => {
   loading.value = true
   try {
-    await Promise.all([loadSiteConfigs(), loadEmailConfigs()])
+    await Promise.all([loadSiteConfigs(), loadEmailConfigs(), loadAIConfigs()])
   } finally {
     loading.value = false
   }
@@ -188,10 +237,21 @@ const handleSave = async () => {
       }
     }
 
-    // 并行保存两个配置组
+    // AI 配置
+    const aiPayload: UpdateSettingGroupRequest = {
+      settings: {
+        'ai.base_url': aiForm.value.base_url,
+        'ai.api_key': aiForm.value.api_key,
+        'ai.model': aiForm.value.model,
+        'ai.prompt': aiForm.value.prompt
+      }
+    }
+
+    // 并行保存三个配置组
     await Promise.all([
       updateSettingGroup('site', sitePayload),
-      updateSettingGroup('email', emailPayload)
+      updateSettingGroup('email', emailPayload),
+      updateSettingGroup('ai', aiPayload)
     ])
 
     ElMessage.success('配置保存成功')
